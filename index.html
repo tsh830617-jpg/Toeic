@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOEIC Practice</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Serif+4:ital,wght@0,300;0,400;0,500;1,300&display=swap');
+  :root {
+    --cream:#F5F0E8;--terracotta:#C4714A;--sage:#7A8C6E;--sand:#D4BFA0;
+    --ink:#2C2416;--light-ink:#5C5040;--warm-white:#FAF7F2;
+    --correct:#5A8A6A;--wrong:#B85555;--highlight:#E8D5B0;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Source Serif 4',Georgia,serif;background:var(--cream);color:var(--ink);min-height:100vh;}
+  .header{background:var(--ink);color:var(--cream);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;}
+  .header-title{font-family:'Playfair Display',serif;font-size:1.25rem;letter-spacing:.03em;}
+  .header-sub{font-size:.7rem;color:var(--sand);letter-spacing:.12em;text-transform:uppercase;margin-top:2px;}
+  .score-badge{background:var(--terracotta);color:#fff;font-family:'Playfair Display',serif;font-size:.85rem;padding:6px 14px;border-radius:20px;}
+  .tab-nav{display:flex;background:var(--warm-white);border-bottom:2px solid var(--sand);}
+  .tab-btn{flex:1;padding:14px 8px;font-family:'Source Serif 4',serif;font-size:.85rem;letter-spacing:.08em;text-transform:uppercase;background:none;border:none;cursor:pointer;color:var(--light-ink);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s;}
+  .tab-btn.active{color:var(--terracotta);border-bottom-color:var(--terracotta);font-weight:500;}
+  .main{padding:20px 16px;max-width:640px;margin:0 auto;}
+  .section-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.15em;color:var(--sage);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+  .section-label::after{content:'';flex:1;height:1px;background:var(--sand);}
+  .question-card{background:var(--warm-white);border-radius:12px;padding:20px;margin-bottom:16px;border:1.5px solid var(--sand);}
+  .question-number{font-size:.65rem;text-transform:uppercase;letter-spacing:.12em;color:var(--terracotta);margin-bottom:8px;font-weight:500;}
+  .question-text{font-size:1rem;line-height:1.65;margin-bottom:16px;}
+  .blank{display:inline-block;border-bottom:2px solid var(--terracotta);min-width:80px;text-align:center;padding:0 6px;color:var(--terracotta);font-style:italic;}
+  .options{display:flex;flex-direction:column;gap:8px;}
+  .option-btn{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border:1.5px solid var(--sand);border-radius:8px;background:var(--cream);cursor:pointer;font-family:'Source Serif 4',serif;font-size:.9rem;color:var(--ink);text-align:left;transition:all .18s;}
+  .option-btn:hover:not(:disabled){border-color:var(--terracotta);background:var(--highlight);}
+  .option-btn:disabled{cursor:default;}
+  .option-label{font-family:'Playfair Display',serif;font-weight:700;color:var(--light-ink);font-size:.85rem;min-width:18px;}
+  .option-btn.correct{background:#EAF4ED;border-color:var(--correct);color:var(--correct);}
+  .option-btn.correct .option-label{color:var(--correct);}
+  .option-btn.wrong{background:#FAEAEA;border-color:var(--wrong);color:var(--wrong);}
+  .option-btn.wrong .option-label{color:var(--wrong);}
+  .explanation{margin-top:14px;padding:12px 14px;background:var(--highlight);border-radius:8px;font-size:.85rem;line-height:1.6;color:var(--light-ink);border-left:3px solid var(--terracotta);display:none;}
+  .explanation.show{display:block;}
+  .explanation strong{color:var(--terracotta);}
+  .transcript-box{background:var(--ink);color:var(--cream);border-radius:10px;padding:18px;margin-bottom:16px;font-size:.9rem;line-height:1.75;}
+  .transcript-label{font-size:.6rem;text-transform:uppercase;letter-spacing:.15em;color:var(--sand);margin-bottom:10px;}
+  .speaker{color:var(--sand);font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px;margin-top:10px;}
+  .speaker:first-of-type{margin-top:0;}
+  .generate-btn{width:100%;padding:14px;background:var(--terracotta);color:#fff;border:none;border-radius:10px;font-family:'Playfair Display',serif;font-size:1rem;letter-spacing:.04em;cursor:pointer;margin-bottom:20px;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .generate-btn:hover{background:#B56340;transform:translateY(-1px);}
+  .progress-row{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
+  .prog-dot{width:10px;height:10px;border-radius:50%;background:var(--sand);}
+  .prog-dot.done-correct{background:var(--correct);}
+  .prog-dot.done-wrong{background:var(--wrong);}
+  .prog-dot.current{background:var(--terracotta);}
+  .result-bar{background:var(--warm-white);border:1.5px solid var(--sand);border-radius:10px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;}
+  .result-bar .label{font-size:.8rem;color:var(--light-ink);}
+  .result-bar .val{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--terracotta);}
+  .panel{display:none;}.panel.active{display:block;}
+  .nav-row{display:flex;gap:10px;margin-top:6px;}
+  .nav-btn{flex:1;padding:11px;border:1.5px solid var(--sand);border-radius:8px;background:var(--cream);font-family:'Source Serif 4',serif;font-size:.85rem;cursor:pointer;color:var(--ink);transition:all .18s;}
+  .nav-btn:hover{border-color:var(--terracotta);}
+  .nav-btn.primary{background:var(--ink);color:var(--cream);border-color:var(--ink);}
+  .nav-btn.primary:hover{background:var(--terracotta);border-color:var(--terracotta);}
+  .set-info{font-size:.75rem;color:var(--light-ink);text-align:center;margin-bottom:16px;}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <div class="header-title">TOEIC Practice</div>
+    <div class="header-sub">文法 &amp; 聽力練習</div>
+  </div>
+  <div class="score-badge" id="scoreBadge">0 / 0</div>
+</div>
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('grammar')">📝 文法</button>
+  <button class="tab-btn" onclick="switchTab('listening')">🎧 聽力</button>
+</div>
+<div class="main">
+  <div class="panel active" id="panel-grammar">
+    <button class="generate-btn" onclick="newGrammarSet()">✦ 抽新題組（5題）</button>
+    <div id="grammarContent"></div>
+  </div>
+  <div class="panel" id="panel-listening">
+    <button class="generate-btn" onclick="newListeningSet()">✦ 抽新對話題組</button>
+    <div id="listeningContent"></div>
+  </div>
+</div>
+
+<script>
+// ===================== QUESTION BANK =====================
+const GRAMMAR_POOL = [
+  // --- Verb Tense ---
+  {s:"The project manager _____ the final report before the deadline last Friday.",blank:"submitted",opts:{A:"submit",B:"submits",C:"submitted",D:"will submit"},ans:"C",pt:"動詞時態",ex:"last Friday 表示過去時間，需用過去式 submitted。"},
+  {s:"By the time the CEO arrives, the team _____ the presentation.",blank:"will have finished",opts:{A:"finishes",B:"will finish",C:"finished",D:"will have finished"},ans:"D",pt:"未來完成式",ex:"'By the time + 現在式' 搭配未來完成式 will have finished，表示某事在另一未來事件發生前完成。"},
+  {s:"The new policy _____ into effect since January of this year.",blank:"has been",opts:{A:"was",B:"is",C:"has been",D:"had been"},ans:"C",pt:"現在完成式",ex:"'since January' 表示從過去延續到現在，需用現在完成式 has been。"},
+  {s:"When the auditors arrived, the accountant _____ all the records.",blank:"had already organized",opts:{A:"organizes",B:"organized",C:"will organize",D:"had already organized"},ans:"D",pt:"過去完成式",ex:"'When the auditors arrived' 是過去時間點，在此之前完成的動作用過去完成式 had already organized。"},
+  {s:"She _____ for this company for ten years before she was promoted.",blank:"had worked",opts:{A:"works",B:"worked",C:"had worked",D:"has worked"},ans:"C",pt:"過去完成式",ex:"'before she was promoted' 是過去事件，在其之前的動作用過去完成式 had worked。"},
+  // --- Word Form ---
+  {s:"The _____ of the new product exceeded all expectations.",blank:"introduction",opts:{A:"introduce",B:"introductory",C:"introduction",D:"introduced"},ans:"C",pt:"詞性變化",ex:"冠詞 The 後面需要名詞，introduce 的名詞形式是 introduction。"},
+  {s:"The manager spoke _____ to the new employee during the orientation.",blank:"encouragingly",opts:{A:"encourage",B:"encouragement",C:"encouraging",D:"encouragingly"},ans:"D",pt:"詞性變化",ex:"修飾動詞 spoke 需要副詞，encourage → encouragingly。"},
+  {s:"The board made a _____ decision to expand into the Asian market.",blank:"strategic",opts:{A:"strategy",B:"strategize",C:"strategic",D:"strategically"},ans:"C",pt:"詞性變化",ex:"修飾名詞 decision 需要形容詞，strategy → strategic。"},
+  {s:"We need to _____ our budget before the end of the quarter.",blank:"finalize",opts:{A:"final",B:"finally",C:"finalize",D:"finalization"},ans:"C",pt:"詞性變化",ex:"need to 後面接原形動詞，final 的動詞形式是 finalize。"},
+  {s:"The company's _____ has improved significantly since the new CEO took over.",blank:"productivity",opts:{A:"productive",B:"produce",C:"productively",D:"productivity"},ans:"D",pt:"詞性變化",ex:"冠詞 The 後面需要名詞，productive → productivity。"},
+  // --- Prepositions ---
+  {s:"Please submit your expense report _____ Friday afternoon.",blank:"by",opts:{A:"until",B:"by",C:"during",D:"within"},ans:"B",pt:"介系詞",ex:"'by Friday' 表示截止時間（最晚到週五），until 表示持續到某時間點，意思不同。"},
+  {s:"The conference room is reserved _____ 2 PM to 4 PM.",blank:"from",opts:{A:"between",B:"since",C:"from",D:"during"},ans:"C",pt:"介系詞",ex:"表示時間區間用 from...to...，between 通常接兩個名詞片語而非時間點。"},
+  {s:"The new branch is located _____ the corner of Fifth Avenue and Main Street.",blank:"on",opts:{A:"in",B:"at",C:"on",D:"by"},ans:"C",pt:"介系詞",ex:"表示街道位置用 on（on the corner of），at 用於具體地址號碼。"},
+  {s:"The team worked _____ the problem for three days straight.",blank:"on",opts:{A:"at",B:"for",C:"on",D:"about"},ans:"C",pt:"介系詞",ex:"'work on' 是固定搭配，表示努力處理某事。"},
+  {s:"Ms. Lin is responsible _____ overseeing the entire logistics department.",blank:"for",opts:{A:"of",B:"to",C:"with",D:"for"},ans:"D",pt:"介系詞",ex:"'be responsible for' 是固定搭配，表示負責某事。"},
+  // --- Conjunctions ---
+  {s:"_____ the weather was bad, the outdoor event went ahead as planned.",blank:"Although",opts:{A:"Because",B:"Although",C:"Therefore",D:"Moreover"},ans:"B",pt:"連接詞",ex:"前後句是讓步關係（天氣差，但活動照常），用 Although（雖然）。"},
+  {s:"The shipment was delayed; _____, all orders were delivered on time.",blank:"nevertheless",opts:{A:"therefore",B:"because",C:"nevertheless",D:"unless"},ans:"C",pt:"連接詞",ex:"前後有轉折關係，nevertheless（儘管如此）表示讓步，therefore 表示因果。"},
+  {s:"Please call us _____ you have any questions about your reservation.",blank:"if",opts:{A:"unless",B:"although",C:"if",D:"despite"},ans:"C",pt:"連接詞",ex:"'if you have any questions' 表示條件，unless 是「除非」，意思相反。"},
+  {s:"The merger was approved _____ strong opposition from shareholders.",blank:"despite",opts:{A:"although",B:"however",C:"despite",D:"because of"},ans:"C",pt:"介系詞／連接詞",ex:"despite 後面接名詞片語（strong opposition），although 後面接子句。"},
+  {s:"You must complete the safety training _____ you can access the facility.",blank:"before",opts:{A:"after",B:"before",C:"when",D:"since"},ans:"B",pt:"連接詞",ex:"必須先完成訓練才能進入，表示先後順序用 before（在...之前）。"},
+  // --- Subject-Verb Agreement ---
+  {s:"The number of employees who work remotely _____ increased this year.",blank:"has",opts:{A:"have",B:"has",C:"are",D:"were"},ans:"B",pt:"主動詞一致",ex:"'The number of...' 作主詞時視為單數，用 has。（注意：'A number of...' 視為複數）"},
+  {s:"Neither the director nor the managers _____ aware of the issue.",blank:"were",opts:{A:"was",B:"were",C:"is",D:"has"},ans:"B",pt:"主動詞一致",ex:"'Neither A nor B' 的動詞依靠近的主詞（managers，複數）決定，用 were。"},
+  {s:"Every employee and manager _____ required to attend the seminar.",blank:"is",opts:{A:"are",B:"were",C:"is",D:"have"},ans:"C",pt:"主動詞一致",ex:"'Every A and B' 視為單數，動詞用單數 is。"},
+  {s:"The committee _____ meeting to discuss the budget tomorrow.",blank:"is",opts:{A:"are",B:"is",C:"were",D:"have"},ans:"B",pt:"主動詞一致",ex:"committee 作為一個整體時用單數動詞 is（美式英語）。"},
+  {s:"Statistics _____ an essential tool for business analysis.",blank:"is",opts:{A:"are",B:"is",C:"were",D:"have been"},ans:"B",pt:"主動詞一致",ex:"'Statistics'（統計學這門學科）視為單數，用 is。作為數據時才用複數。"},
+  // --- Passive Voice ---
+  {s:"All applications _____ reviewed by the HR team within five business days.",blank:"will be",opts:{A:"will review",B:"will be",C:"are going to",D:"reviews"},ans:"B",pt:"被動語態",ex:"applications 是被審核的對象（被動），未來式被動 will be + reviewed。"},
+  {s:"The new office building _____ last year by a well-known architect.",blank:"was designed",opts:{A:"designed",B:"was designed",C:"has designed",D:"is designing"},ans:"B",pt:"被動語態",ex:"last year 是過去時間，building 是被設計的，過去式被動 was designed。"},
+  {s:"Employees _____ to take at least ten days of annual leave per year.",blank:"are encouraged",opts:{A:"encourage",B:"encouraging",C:"are encouraged",D:"have encouraged"},ans:"C",pt:"被動語態",ex:"employees 是被鼓勵的對象，現在式被動 are encouraged。"},
+  // --- Relative Clauses ---
+  {s:"The candidate _____ résumé impressed the panel was offered the position.",blank:"whose",opts:{A:"who",B:"whom",C:"whose",D:"which"},ans:"C",pt:"關係子句",ex:"空格後是名詞 résumé（某人的履歷），表示所有格關係用 whose。"},
+  {s:"The report _____ was submitted last week contained several errors.",blank:"that",opts:{A:"who",B:"whom",C:"which",D:"that"},ans:"D",pt:"關係子句",ex:"先行詞是物（report），可用 that 或 which；that 在限定性子句中更常見。"},
+];
+
+const LISTENING_POOL = [
+  {
+    topic:"Scheduling a Meeting",
+    conversation:[
+      {speaker:"Woman",line:"Good morning. I'd like to schedule a meeting with Mr. Chen from the finance department."},
+      {speaker:"Man",line:"Of course. What day were you thinking?"},
+      {speaker:"Woman",line:"Would Thursday afternoon work? I'm free after two o'clock."},
+      {speaker:"Man",line:"Let me check his calendar. I'm afraid he has a client lunch that runs until three. How about four o'clock?"},
+      {speaker:"Woman",line:"That works perfectly. Can we use Conference Room B?"},
+      {speaker:"Man",line:"Conference Room B is already booked at that time, but Room A on the third floor is available."},
+      {speaker:"Woman",line:"That's fine. Please send a calendar invitation to both of us."},
+      {speaker:"Man",line:"Will do. Shall I include the agenda you sent me last week?"},
+      {speaker:"Woman",line:"Yes, please attach it. And could you also arrange for a projector?"},
+      {speaker:"Man",line:"No problem. I'll have everything set up by 3:45."},
+    ],
+    questions:[
+      {q:"What is the woman trying to do?",opts:{A:"Cancel a meeting",B:"Book a conference room",C:"Schedule a meeting with Mr. Chen",D:"Send a calendar invitation"},ans:"C",ex:"Woman 說 'I'd like to schedule a meeting with Mr. Chen'，答案是 C。"},
+      {q:"Why can't the meeting start at 3:00 PM?",opts:{A:"The conference room is booked",B:"Mr. Chen has a client lunch",C:"The woman is not free",D:"The projector is unavailable"},ans:"B",ex:"Man 說 'he has a client lunch that runs until three'，所以三點不行，答案是 B。"},
+      {q:"What does the woman ask the man to arrange?",opts:{A:"A catering service",B:"Parking space",C:"A laptop computer",D:"A projector"},ans:"D",ex:"Woman 最後說 'could you also arrange for a projector?'，答案是 D。"},
+    ]
+  },
+  {
+    topic:"Product Order Issue",
+    conversation:[
+      {speaker:"Man",line:"Thank you for calling Horizon Office Supplies. This is David. How may I help you?"},
+      {speaker:"Woman",line:"Hi David. I placed an order three days ago, but I still haven't received a shipping confirmation."},
+      {speaker:"Man",line:"I'm sorry to hear that. Could I have your order number, please?"},
+      {speaker:"Woman",line:"Sure. It's OH-4892."},
+      {speaker:"Man",line:"Thank you. Let me pull up your account... I see the issue. One item in your order is currently out of stock."},
+      {speaker:"Woman",line:"Oh, which item is it?"},
+      {speaker:"Man",line:"The ergonomic desk chair in black. We expect it back in stock within five business days."},
+      {speaker:"Woman",line:"I see. Can you ship the rest of my order now and send the chair separately when it's available?"},
+      {speaker:"Man",line:"Absolutely. I'll process a partial shipment right away. You should receive a confirmation email within the hour."},
+      {speaker:"Woman",line:"That would be great. Thank you for your help."},
+    ],
+    questions:[
+      {q:"Why is the woman calling?",opts:{A:"To cancel her order",B:"To ask about a shipping delay",C:"To request a refund",D:"To place a new order"},ans:"B",ex:"Woman 說沒有收到 shipping confirmation（出貨確認），所以是詢問出貨延誤，答案是 B。"},
+      {q:"What is the problem with the woman's order?",opts:{A:"The wrong item was sent",B:"The payment was declined",C:"One item is out of stock",D:"The order was lost"},ans:"C",ex:"Man 說 'One item in your order is currently out of stock'，答案是 C。"},
+      {q:"What will the man do next?",opts:{A:"Refund the out-of-stock item",B:"Process a partial shipment",C:"Call the warehouse",D:"Cancel the entire order"},ans:"B",ex:"Man 說 'I'll process a partial shipment right away'，答案是 B。"},
+    ]
+  },
+  {
+    topic:"Job Interview Preparation",
+    conversation:[
+      {speaker:"Woman A",line:"Are you nervous about your interview tomorrow at Westfield Consulting?"},
+      {speaker:"Woman B",line:"A little. I've researched the company, but I'm not sure how to answer questions about my weaknesses."},
+      {speaker:"Woman A",line:"That's always a tough one. The key is to mention a real weakness, but show what you're doing to improve it."},
+      {speaker:"Woman B",line:"That makes sense. What about salary negotiation? Should I bring that up in the first interview?"},
+      {speaker:"Woman A",line:"Generally, it's better to wait until they offer you the position. Let them make the first move."},
+      {speaker:"Woman B",line:"Good advice. I also prepared some questions to ask them at the end."},
+      {speaker:"Woman A",line:"That's great. Asking thoughtful questions shows your genuine interest in the role."},
+      {speaker:"Woman B",line:"I was thinking of asking about opportunities for professional development."},
+      {speaker:"Woman A",line:"Perfect. That shows you're thinking long-term. I'm sure you'll do great."},
+    ],
+    questions:[
+      {q:"What is Woman B preparing for?",opts:{A:"A company presentation",B:"A job interview",C:"A salary review",D:"A performance evaluation"},ans:"B",ex:"Woman A 提到 'your interview tomorrow at Westfield Consulting'，答案是 B。"},
+      {q:"What advice does Woman A give about salary negotiation?",opts:{A:"Negotiate as early as possible",B:"Ask for a specific amount",C:"Wait until after receiving an offer",D:"Avoid the topic entirely"},ans:"C",ex:"Woman A 說 'it's better to wait until they offer you the position'，答案是 C。"},
+      {q:"What question does Woman B plan to ask at the interview?",opts:{A:"About the company's history",B:"About professional development opportunities",C:"About the CEO's background",D:"About the company's competitors"},ans:"B",ex:"Woman B 說 'asking about opportunities for professional development'，答案是 B。"},
+    ]
+  },
+  {
+    topic:"Office Renovation Plans",
+    conversation:[
+      {speaker:"Man",line:"I heard the fourth floor is finally getting renovated. Do you know when it starts?"},
+      {speaker:"Woman",line:"The construction is scheduled to begin on the fifteenth of next month."},
+      {speaker:"Man",line:"That's sooner than I expected. Where will the fourth-floor staff be relocated?"},
+      {speaker:"Woman",line:"Most teams will move to the second floor temporarily. There's enough space there."},
+      {speaker:"Man",line:"What about the IT department? They have a lot of equipment."},
+      {speaker:"Woman",line:"They'll be staying on the fourth floor, but in the east wing, which isn't affected by the renovation."},
+      {speaker:"Man",line:"I see. How long is the renovation expected to take?"},
+      {speaker:"Woman",line:"About six weeks, assuming there are no unexpected delays."},
+      {speaker:"Man",line:"Will there be any disruptions to the building's internet or power?"},
+      {speaker:"Woman",line:"Facilities management has promised to schedule any power work on weekends to minimize disruption."},
+    ],
+    questions:[
+      {q:"What is being discussed?",opts:{A:"A company merger",B:"An office renovation",C:"A staff relocation policy",D:"An IT system upgrade"},ans:"B",ex:"對話一開始 Man 就說 'the fourth floor is finally getting renovated'，答案是 B。"},
+      {q:"Where will most fourth-floor staff be relocated?",opts:{A:"The third floor",B:"A nearby building",C:"The east wing",D:"The second floor"},ans:"D",ex:"Woman 說 'Most teams will move to the second floor temporarily'，答案是 D。"},
+      {q:"When will power-related work be done?",opts:{A:"During weekday mornings",B:"On weekends",C:"Late at night",D:"During lunch breaks"},ans:"B",ex:"Woman 說 'schedule any power work on weekends'，答案是 B。"},
+    ]
+  },
+  {
+    topic:"Business Trip Arrangements",
+    conversation:[
+      {speaker:"Man",line:"I need to travel to our Singapore office next week for a client presentation."},
+      {speaker:"Woman",line:"I'll start making the arrangements. Do you have a preferred departure date?"},
+      {speaker:"Man",line:"Monday morning would be ideal. I need to be there by Tuesday for the presentation."},
+      {speaker:"Woman",line:"There's a direct flight that leaves at 7 AM on Monday, arriving at 1 PM local time."},
+      {speaker:"Man",line:"That sounds good. Please book business class if it's within the travel budget."},
+      {speaker:"Woman",line:"I'll check. The budget is two thousand dollars, and business class is around eighteen hundred, so that should be fine."},
+      {speaker:"Man",line:"Great. And can you book me into the hotel near the office? I stayed there last time and it was very convenient."},
+      {speaker:"Woman",line:"The Meridian Hotel on Clarke Quay? I'll reserve a room for three nights."},
+      {speaker:"Man",line:"Yes, that's the one. Also, please arrange a car from the airport."},
+      {speaker:"Woman",line:"I'll add that to the itinerary and email everything to you by end of day."},
+    ],
+    questions:[
+      {q:"Why is the man traveling to Singapore?",opts:{A:"To attend a training session",B:"To sign a contract",C:"To give a client presentation",D:"To meet a new employee"},ans:"C",ex:"Man 說 'for a client presentation'，答案是 C。"},
+      {q:"What class of flight does the man want to book?",opts:{A:"Economy class",B:"First class",C:"Premium economy",D:"Business class"},ans:"D",ex:"Man 說 'book business class if it's within the travel budget'，答案是 D。"},
+      {q:"What does the man ask the woman to arrange in addition to the flight and hotel?",opts:{A:"A restaurant reservation",B:"A car from the airport",C:"A meeting room",D:"A tour guide"},ans:"B",ex:"Man 說 'please arrange a car from the airport'，答案是 B。"},
+    ]
+  },
+];
+
+// ===================== STATE =====================
+let gs = { questions:[], answered:[], chosen:{}, current:0 };
+let ls = { passage:null, answered:[], chosen:{} };
+let activeTab = 'grammar';
+
+function shuffle(arr){ return [...arr].sort(()=>Math.random()-.5); }
+
+function switchTab(tab){
+  activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>{
+    b.classList.toggle('active',(i===0&&tab==='grammar')||(i===1&&tab==='listening'));
+  });
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+  updateBadge();
+}
+
+function updateBadge(){
+  if(activeTab==='grammar'){
+    const c=gs.answered.filter(a=>a===true).length;
+    const d=gs.answered.filter(a=>a!==null).length;
+    document.getElementById('scoreBadge').textContent=c+' / '+d;
+  } else {
+    if(!ls.passage){ document.getElementById('scoreBadge').textContent='0 / 0'; return; }
+    const c=ls.answered.filter(a=>a===true).length;
+    const d=ls.answered.filter(a=>a!==null).length;
+    document.getElementById('scoreBadge').textContent=c+' / '+d;
+  }
+}
+
+// ===================== GRAMMAR =====================
+function newGrammarSet(){
+  const pool = shuffle(GRAMMAR_POOL);
+  gs.questions = pool.slice(0,5);
+  gs.answered = new Array(5).fill(null);
+  gs.chosen = {};
+  gs.current = 0;
+  renderGrammar();
+}
+
+function renderGrammar(){
+  const qs = gs.questions;
+  if(!qs.length){ document.getElementById('grammarContent').innerHTML=''; return; }
+  const answered = gs.answered;
+  const correct = answered.filter(a=>a===true).length;
+  const done = answered.filter(a=>a!==null).length;
+
+  let dots = qs.map((_,i)=>{
+    let cls='prog-dot';
+    if(answered[i]===true)cls+=' done-correct';
+    else if(answered[i]===false)cls+=' done-wrong';
+    else if(i===gs.current)cls+=' current';
+    return `<div class="${cls}"></div>`;
+  }).join('');
+
+  let resultBar = done>0?`<div class="result-bar"><span class="label">目前正確率</span><span class="val">${correct} / ${done}</span></div>`:'';
+  let html=`<div class="section-label">Part 5 — 文法填空</div><div class="progress-row">${dots}</div>${resultBar}`;
+
+  const q = qs[gs.current];
+  const i = gs.current;
+  const isAnswered = answered[i]!==null;
+  const displayBlank = isAnswered ? q.blank : '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+  const sentence = q.s.replace('_____',`<span class="blank">${displayBlank}</span>`);
+
+  let optHtml = Object.entries(q.opts).map(([key,val])=>{
+    let cls='option-btn';
+    if(isAnswered){
+      if(key===q.ans)cls+=' correct';
+      else if(gs.chosen[i]===key&&key!==q.ans)cls+=' wrong';
+    }
+    return `<button class="${cls}" ${isAnswered?'disabled':''} onclick="answerG(${i},'${key}')">
+      <span class="option-label">${key}</span><span>${val}</span></button>`;
+  }).join('');
+
+  let exHtml = isAnswered?`<div class="explanation show"><strong>📌 ${q.pt}</strong><br>${q.ex}</div>`:'';
+
+  html+=`<div class="question-card">
+    <div class="question-number">Question ${i+1} of ${qs.length}</div>
+    <div class="question-text">${sentence}</div>
+    <div class="options">${optHtml}</div>${exHtml}</div>`;
+
+  let nav='<div class="nav-row">';
+  if(i>0)nav+=`<button class="nav-btn" onclick="gotoG(${i-1})">← 上一題</button>`;
+  if(i<qs.length-1)nav+=`<button class="nav-btn primary" onclick="gotoG(${i+1})">下一題 →</button>`;
+  nav+='</div>';
+  html+=nav;
+
+  document.getElementById('grammarContent').innerHTML=html;
+  updateBadge();
+}
+
+function answerG(idx,choice){
+  gs.chosen[idx]=choice;
+  gs.answered[idx]=(choice===gs.questions[idx].ans);
+  renderGrammar();
+}
+function gotoG(idx){ gs.current=idx; renderGrammar(); }
+
+// ===================== LISTENING =====================
+function newListeningSet(){
+  const pool = shuffle(LISTENING_POOL);
+  ls.passage = pool[0];
+  ls.answered = new Array(ls.passage.questions.length).fill(null);
+  ls.chosen = {};
+  renderListening();
+}
+
+function renderListening(){
+  const p = ls.passage;
+  if(!p){ document.getElementById('listeningContent').innerHTML=''; return; }
+
+  let txHtml = p.conversation.map(line=>
+    `<div class="speaker">${line.speaker}</div><div>${line.line}</div>`
+  ).join('');
+
+  let html=`<div class="section-label">Part 3 — 情境對話</div>
+    <div class="transcript-box">
+      <div class="transcript-label">📄 Conversation — ${p.topic}</div>
+      ${txHtml}
+    </div>`;
+
+  p.questions.forEach((q,i)=>{
+    const isAnswered = ls.answered[i]!==null;
+    let optHtml = Object.entries(q.opts).map(([key,val])=>{
+      let cls='option-btn';
+      if(isAnswered){
+        if(key===q.ans)cls+=' correct';
+        else if(ls.chosen[i]===key&&key!==q.ans)cls+=' wrong';
+      }
+      return `<button class="${cls}" ${isAnswered?'disabled':''} onclick="answerL(${i},'${key}')">
+        <span class="option-label">${key}</span><span>${val}</span></button>`;
+    }).join('');
+    let exHtml = isAnswered?`<div class="explanation show">${q.ex}</div>`:'';
+    html+=`<div class="question-card">
+      <div class="question-number">Question ${i+1} of ${p.questions.length}</div>
+      <div class="question-text">${q.q}</div>
+      <div class="options">${optHtml}</div>${exHtml}</div>`;
+  });
+
+  const c=ls.answered.filter(a=>a===true).length;
+  const d=ls.answered.filter(a=>a!==null).length;
+  if(d===p.questions.length){
+    html+=`<div class="result-bar"><span class="label">本組得分</span><span class="val">${c} / ${d}</span></div>`;
+  }
+
+  document.getElementById('listeningContent').innerHTML=html;
+  updateBadge();
+}
+
+function answerL(idx,choice){
+  ls.chosen[idx]=choice;
+  ls.answered[idx]=(choice===ls.passage.questions[idx].ans);
+  renderListening();
+}
+
+// Auto-load first set
+newGrammarSet();
+</script>
+</body>
+</html>
